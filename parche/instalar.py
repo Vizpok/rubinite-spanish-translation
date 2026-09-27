@@ -247,22 +247,30 @@ def tokens_us(dll):
     return res
 
 
-def parchear_dll(juego):
-    ruta = os.path.join(juego, 'Rubinite_Data', 'Managed', 'Assembly-CSharp.dll')
-    dll = bytearray(open(ruta, 'rb').read())
+def patrones_idioma(dll):
+    """(patrón original, patrón ya parcheado, T) de las 4 comprobaciones de idioma alfabético."""
     tok = tokens_us(bytes(dll))
     T = lambda s: struct.pack('<I', tok[s])
     LD = rb'(?:[\x06-\x09]|\x11.)'                      # ldloc.0-3 | ldloc.s N
     CMP = lambda s: rb'(' + LD + rb')\x72' + re.escape(T(s)) + rb'\x28(....)'
     patron = re.compile(CMP('en-US') + rb'\x2d(.)' + CMP('pt-BR') + rb'\x2d.' + CMP('ru') + rb'\x2d.' +
                         CMP('uk') + rb'([\x2c\x2d])(.)(?:' + CMP('ja') + rb'\x2d(.)\x2b(.))?', re.S)
-    hallados = list(patron.finditer(dll))
     ya_hecho = re.compile(CMP('zh-TW') + rb'\x2d.' + CMP('zh-CN') + rb'\x2d.' + CMP('ko') + rb'\x2d.', re.S)
-    parcheado = not hallados and bool(ya_hecho.search(dll))
-    origen = respaldar(ruta, parcheado)
-    if parcheado:
-        dll = bytearray(open(origen, 'rb').read())
-        hallados = list(patron.finditer(dll))
+    return patron, ya_hecho, T
+
+
+def parchear_dll(juego):
+    # Se modifica en su sitio (sin partir de la copia de seguridad) para no borrar
+    # parches de otros mods que también toquen esta DLL.
+    ruta = os.path.join(juego, 'Rubinite_Data', 'Managed', 'Assembly-CSharp.dll')
+    dll = bytearray(open(ruta, 'rb').read())
+    patron, ya_hecho, T = patrones_idioma(dll)
+    hallados = list(patron.finditer(dll))
+    if not hallados and ya_hecho.search(dll):
+        print('  Velocidad de escritura y sonido del diálogo: ya estaban ajustados')
+        return
+    if len(hallados) == 4:
+        respaldar(ruta, False)
     if len(hallados) != 4:
         print(f'  AVISO: se esperaban 4 comprobaciones de idioma y hay {len(hallados)}; no se toca la DLL.')
         return
@@ -297,12 +305,28 @@ def parchear_dll(juego):
     print('  Velocidad de escritura y sonido del diálogo: ajustados para el español')
 
 
+def restaurar_dll(ruta):
+    """Devuelve a su estado original solo las zonas que cambió este mod, para no deshacer otros mods."""
+    original = open(ruta + SUFIJO_BAK, 'rb').read()
+    dll = bytearray(open(ruta, 'rb').read())
+    patron, ya_hecho, _ = patrones_idioma(original)
+    for m in patron.finditer(original):
+        if len(dll) == len(original) and ya_hecho.match(dll, m.start()):
+            dll[m.start():m.end()] = original[m.start():m.end()]
+    tmp = ruta + '.tmp_es'
+    open(tmp, 'wb').write(dll)
+    os.replace(tmp, ruta)
+    os.remove(ruta + SUFIJO_BAK)
+
+
 def desinstalar(juego):
     n = 0
-    for rel in (('Rubinite_Data', 'resources.assets'), ('Rubinite_Data', 'Managed', 'Assembly-CSharp.dll')):
-        ruta = os.path.join(juego, *rel)
-        if os.path.isfile(ruta + SUFIJO_BAK):
-            shutil.copy2(ruta + SUFIJO_BAK, ruta); os.remove(ruta + SUFIJO_BAK); n += 1
+    assets = os.path.join(juego, 'Rubinite_Data', 'resources.assets')
+    if os.path.isfile(assets + SUFIJO_BAK):
+        shutil.copy2(assets + SUFIJO_BAK, assets); os.remove(assets + SUFIJO_BAK); n += 1
+    dll = os.path.join(juego, 'Rubinite_Data', 'Managed', 'Assembly-CSharp.dll')
+    if os.path.isfile(dll + SUFIJO_BAK):
+        restaurar_dll(dll); n += 1
     print(f'Restaurados {n} archivos originales.' if n else 'No había nada que restaurar.')
 
 
