@@ -4,6 +4,8 @@ Traducción no oficial de [Rubinite](https://store.steampowered.com/app/1845250/
 
 Traté de que no quedara como traducción literal. El juego se escribió primero en chino, así que en las partes donde el inglés perdía algo (chistes, apodos, tono de los personajes) revisé el original para dejarlo lo más parecido posible a lo que se quería decir.
 
+![Menú de idioma con la opción Español](capturas/idioma-espanol.png)
+
 ## Cómo instalar
 
 1. Descarga `RubiniteES.exe` de la [última versión](../../releases/latest).
