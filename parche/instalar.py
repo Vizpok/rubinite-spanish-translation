@@ -58,8 +58,10 @@ def bibliotecas_steam():
 
 
 def buscar_juego(arg):
-    candidatos = [arg, os.path.dirname(arg)] if arg else []
-    candidatos += [os.path.join(b, 'steamapps', 'common', 'Rubinite') for b in bibliotecas_steam()]
+    if arg:                                # si se indica una ruta, solo se usa esa
+        candidatos = [arg, os.path.dirname(arg)]
+    else:
+        candidatos = [os.path.join(b, 'steamapps', 'common', 'Rubinite') for b in bibliotecas_steam()]
     for c in candidatos:
         if c and os.path.isfile(os.path.join(c, 'Rubinite_Data', 'resources.assets')):
             return c
@@ -306,17 +308,51 @@ def parchear_dll(juego):
 
 
 def restaurar_dll(ruta):
-    """Devuelve a su estado original solo las zonas que cambió este mod, para no deshacer otros mods."""
-    original = open(ruta + SUFIJO_BAK, 'rb').read()
+    """Deshace solo el cambio de este mod reconstruyendo las instrucciones originales.
+
+    No se copia la copia de seguridad encima: así no se pierden otros mods, y funciona aunque otra
+    herramienta haya reescrito la DLL (las posiciones y los tokens pueden haber cambiado)."""
     dll = bytearray(open(ruta, 'rb').read())
-    patron, ya_hecho, _ = patrones_idioma(original)
-    for m in patron.finditer(original):
-        if len(dll) == len(original) and ya_hecho.match(dll, m.start()):
-            dll[m.start():m.end()] = original[m.start():m.end()]
-    tmp = ruta + '.tmp_es'
-    open(tmp, 'wb').write(dll)
-    os.replace(tmp, ruta)
-    os.remove(ruta + SUFIJO_BAK)
+    tok = tokens_us(bytes(dll))
+    T = lambda s: struct.pack('<I', tok[s])
+    LD = rb'(?:[\x06-\x09]|\x11.)'
+    CMP = lambda s: rb'(' + LD + rb')\x72' + re.escape(T(s)) + rb'\x28(....)'
+    parcheado = re.compile(CMP('zh-TW') + rb'\x2d(.)' + CMP('zh-CN') + rb'\x2d.' + CMP('ko') + rb'\x2d.' +
+                           CMP('ja') + rb'\x2d(.)(?:(\x00+)\x2b(.))?', re.S)
+    s8 = lambda x: struct.unpack('b', x)[0]
+    revertidos = 0
+    for m in list(parcheado.finditer(dll)):
+        ld, eq = m.group(1), m.group(2)
+        tam = len(ld) + 12
+        ini = m.start()
+        cinco = m.group(11) is not None and len(m.group(11)) == tam
+        if m.group(11) is not None and not cinco:
+            continue
+        if not cinco:        # 4 comprobaciones: los códigos no alfabéticos saltaban a «no latino»; lo latino sigue
+            no_latino = ini + tam + s8(m.group(3))
+            latino = ini + tam * 4
+            orden = [('en-US', 0x2d, latino), ('pt-BR', 0x2d, latino), ('ru', 0x2d, latino), ('uk', 0x2c, no_latino)]
+        else:                # 5 comprobaciones + br.s
+            fin = ini + tam + s8(m.group(3))
+            ja = ini + tam * 4 + s8(m.group(10))
+            latino = ini + tam * 5 + 2 + s8(m.group(12))
+            orden = [('en-US', 0x2d, latino), ('pt-BR', 0x2d, latino), ('ru', 0x2d, latino), ('uk', 0x2d, latino),
+                     ('ja', 0x2d, ja)]
+        nuevo = bytearray()
+        for k, (codigo, salto, dst) in enumerate(orden):
+            nuevo += ld + b'\x72' + T(codigo) + b'\x28' + eq + bytes([salto]) + struct.pack('b', dst - (ini + tam * (k + 1)))
+        if cinco:
+            nuevo += b'\x2b' + struct.pack('b', fin - (ini + tam * 5 + 2))
+        assert len(nuevo) == m.end() - ini
+        dll[ini:m.end()] = nuevo
+        revertidos += 1
+    if revertidos:
+        tmp = ruta + '.tmp_es'
+        open(tmp, 'wb').write(dll)
+        os.replace(tmp, ruta)
+    if os.path.isfile(ruta + SUFIJO_BAK):
+        os.remove(ruta + SUFIJO_BAK)
+    return revertidos
 
 
 def desinstalar(juego):
@@ -325,8 +361,8 @@ def desinstalar(juego):
     if os.path.isfile(assets + SUFIJO_BAK):
         shutil.copy2(assets + SUFIJO_BAK, assets); os.remove(assets + SUFIJO_BAK); n += 1
     dll = os.path.join(juego, 'Rubinite_Data', 'Managed', 'Assembly-CSharp.dll')
-    if os.path.isfile(dll + SUFIJO_BAK):
-        restaurar_dll(dll); n += 1
+    if restaurar_dll(dll):
+        n += 1
     print(f'Restaurados {n} archivos originales.' if n else 'No había nada que restaurar.')
 
 
