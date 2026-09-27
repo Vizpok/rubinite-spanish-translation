@@ -409,4 +409,4 @@ if __name__ == '__main__':
         import traceback
         traceback.print_exc()
         salir(f'\nOcurrió un error: {e}\nSi el problema sigue, repórtalo en '
-              'https://github.com/Vizpok/rubinite-traduccion-es/issues')
+              'https://github.com/Vizpok/rubinite-spanish-translation/issues')
