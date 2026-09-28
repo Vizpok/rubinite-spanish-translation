@@ -8,8 +8,8 @@ Traté de que no quedara como traducción literal. El juego se escribió primero
 
 ## Cómo instalar
 
-1. Descarga `RubiniteES.exe` de la [última versión](../../releases/latest).
-2. Cierra el juego, abre el programa y elige la opción **1**.
+1. Descarga `RubiniteES-v1.0.zip` de la [última versión](../../releases/latest) y descomprímelo.
+2. Cierra el juego, abre `RubiniteES.exe` (dentro de la carpeta `RubiniteES`) y elige la opción **1**. No saques el .exe de su carpeta: necesita la carpeta `_internal` que va al lado.
 3. Dentro del juego ve a Configuración → Juego → Idioma y selecciona **Español**.
 
 El programa encuentra el juego solo. Si lo tienes en una ruta rara y no lo detecta, arrastra la carpeta del juego encima del .exe.
