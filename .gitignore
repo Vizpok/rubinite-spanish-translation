@@ -1,5 +1,7 @@
+codigo/build/
+codigo/dist/
+*.spec
 __pycache__/
 *.pyc
-build/
-dist/
-*.spec
+codigo/*.dll
+codigo/*.exe

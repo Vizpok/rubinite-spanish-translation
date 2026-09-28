@@ -1,5 +1,7 @@
 # Rubinite en español
 
+### ⬇️ [Descargar RubiniteES-v1.0.zip](https://github.com/Vizpok/rubinite-spanish-translation/raw/main/RubiniteES-v1.0.zip)
+
 Traducción no oficial de [Rubinite](https://store.steampowered.com/app/1845250/Rubinite/) al español. Está todo traducido: diálogos, menús, tutoriales, objetos, talismanes, habilidades, documentos, logros y el mapa (1948 textos).
 
 Traté de que no quedara como traducción literal. El juego se escribió primero en chino, así que en las partes donde el inglés perdía algo (chistes, apodos, tono de los personajes) revisé el original para dejarlo lo más parecido posible a lo que se quería decir.
@@ -8,7 +10,7 @@ Traté de que no quedara como traducción literal. El juego se escribió primero
 
 ## Cómo instalar
 
-1. Descarga `RubiniteES-v1.0.zip` de la [última versión](../../releases/latest) y descomprímelo.
+1. Descarga el .zip con el enlace de arriba y descomprímelo.
 2. Cierra el juego, abre `RubiniteES.exe` (dentro de la carpeta `RubiniteES`) y elige la opción **1**. No saques el .exe de su carpeta: necesita la carpeta `_internal` que va al lado.
 3. Dentro del juego ve a Configuración → Juego → Idioma y selecciona **Español**.
 
@@ -42,7 +44,7 @@ Strike → Estocada · Slash → Tajo · Sunder Slash → Tajo Quebrantador · F
 
 Si ves algo mal traducido, un texto en inglés o algo que se ve raro, abre un [issue](../../issues) o déjalo en los comentarios de Steam.
 
-Los textos están en `parche/traduccion_es.json`. Si quieres cambiar algo tú mismo, edítalo, ponlo en la misma carpeta que `RubiniteES.exe` y vuelve a instalar. Solo no toques las etiquetas como `<speed=0.5>` o `<color=#...>`, ni los `\n`.
+Los textos están en `codigo/parche/traduccion_es.json`. Si quieres cambiar algo tú mismo, edítalo, ponlo en la misma carpeta que `RubiniteES.exe` y vuelve a instalar. Solo no toques las etiquetas como `<speed=0.5>` o `<color=#...>`, ni los `\n`.
 
 Lo que no está traducido son los créditos finales, porque el juego no los maneja con su sistema de idiomas.
 
